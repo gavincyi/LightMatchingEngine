@@ -1,0 +1,8 @@
+recursive-include *.py
+
+global-exclude __pycache__/*
+global-exclude .deps/*
+global-exclude *.so
+global-exclude *.pyd
+global-exclude *.pyc
+global-exclude .git*
