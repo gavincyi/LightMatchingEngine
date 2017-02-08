@@ -90,7 +90,9 @@ class LightMatchingEngine(object):
             # Buy
             best_price = min(order_book.asks.keys()) if len(order_book.asks) > 0 \
                             else None
-            while best_price is not None and price >= best_price and order.leaves_qty > 0:
+            while best_price is not None and \
+                  (price == 0.0 or price >= best_price ) and \
+                  order.leaves_qty > 0:
                 best_price_qty = sum([ask.qty for ask in order_book.asks[best_price]]) 
                 match_qty = min(best_price_qty, order.leaves_qty)
                 assert match_qty > 0, "Match quantity must be larger than zero"
@@ -136,7 +138,9 @@ class LightMatchingEngine(object):
             #Sell
             best_price = max(order_book.bids.keys()) if len(order_book.bids) > 0 \
                             else None
-            while best_price is not None and price <= best_price and order.leaves_qty > 0:
+            while best_price is not None and \
+                  (price == 0.0 or price <= best_price) and \
+                  order.leaves_qty > 0:
                 best_price_qty = sum([bid.qty for bid in order_book.bids[best_price]]) 
                 match_qty = min(best_price_qty, order.leaves_qty)
                 assert match_qty > 0, "Match quantity must be larger than zero"
@@ -181,15 +185,13 @@ class LightMatchingEngine(object):
         
         return order, trades
     
-    def cancel_order(self, order_id, instmt, side):
+    def cancel_order(self, order_id, instmt):
         """
         Cancel order
         :param order_id     Order ID
         :param side         Side
         :return The order if the cancellation is successful
         """
-        assert side == Side.BUY or side == Side.SELL, \
-                "Invalid side %s" % side
         assert instmt in self.order_books.keys(), \
                 "Instrument %s is not valid in the order book" % instmt
         order_book = self.order_books[instmt]
@@ -201,6 +203,7 @@ class LightMatchingEngine(object):
         order = order_book.order_id_map[order_id]
         order_price = order.price
         order_id = order.order_id
+        side = order.side
         
         if side == Side.BUY:
             assert order_price in order_book.bids.keys(), \
@@ -222,10 +225,10 @@ class LightMatchingEngine(object):
             # Cannot find the order ID. Incorrect side
             return None
             
-        if order.side == Side.BUY and len(order_book.bids[order_price]) == 0:
+        if side == Side.BUY and len(order_book.bids[order_price]) == 0:
             # Delete empty particular price level
             del order_book.bids[order_price]
-        elif order.side == Side.SELL and len(order_book.asks[order_price]) == 0:
+        elif side == Side.SELL and len(order_book.asks[order_price]) == 0:
             # Delete empty particular price level
             del order_book.asks[order_price]          
         

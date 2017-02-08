@@ -55,8 +55,8 @@ print("Buy order quantity = %d" % buy_order.qty)            # Buy order quantity
 print("Buy order filled = %d" % buy_order.cum_qty)          # Buy order filled = 1000
 print("Buy order leaves = %d" % buy_order.leaves_qty)       # Buy order leaves = 0
 print("Trade price = %.2f" % trades[0].trade_price)         # Trade price = 1.10
-print("Trade quantity = %.2f" % trades[0].trade_qty)        # Trade quantity = 1000
-print("Trade side = %.2f" % trades[0].trade_side)           # Trade side = 2
+print("Trade quantity = %d" % trades[0].trade_qty)          # Trade quantity = 1000
+print("Trade side = %d" % trades[0].trade_side)             # Trade side = 2
 
 ```
 

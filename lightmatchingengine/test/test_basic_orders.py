@@ -63,7 +63,7 @@ class TestBasicOrders(unittest.TestCase):
                          TestBasicOrders.lot_size, lme.Side.BUY, 0, TestBasicOrders.lot_size)
         
         # Cancel a buy order
-        del_order = me.cancel_order(order.order_id, TestBasicOrders.instmt, lme.Side.BUY)
+        del_order = me.cancel_order(order.order_id, TestBasicOrders.instmt)
         self.assertEqual(0, len(trades))
         self.check_order_book(me, TestBasicOrders.instmt, 0, 0)
         self.check_deleted_order(order, del_order)
@@ -79,7 +79,7 @@ class TestBasicOrders(unittest.TestCase):
                          TestBasicOrders.lot_size, lme.Side.SELL, 0, TestBasicOrders.lot_size)         
         
         # Cancel a sell order
-        del_order = me.cancel_order(order.order_id, TestBasicOrders.instmt, lme.Side.SELL)
+        del_order = me.cancel_order(order.order_id, TestBasicOrders.instmt)
         self.check_order_book(me, TestBasicOrders.instmt, 0, 0)
         self.check_deleted_order(order, del_order)
     
@@ -232,9 +232,79 @@ class TestBasicOrders(unittest.TestCase):
                          TestBasicOrders.price, TestBasicOrders.lot_size, buy2_order.side, 4)    
                          
         # Cancel the second order
-        del_order = me.cancel_order(buy2_order.order_id, TestBasicOrders.instmt, lme.Side.BUY)
+        del_order = me.cancel_order(buy2_order.order_id, TestBasicOrders.instmt)
         self.check_order_book(me, TestBasicOrders.instmt, 0, 0)
         self.check_deleted_order(buy2_order, del_order)
         
+    def test_fill_multiple_orders_same_level_market_order(self):
+        me = lme.LightMatchingEngine()
+        
+        # Place buy orders
+        for i in range(1, 11):
+            buy_order, trades = me.add_order(TestBasicOrders.instmt, \
+                                            TestBasicOrders.price, \
+                                            TestBasicOrders.lot_size, \
+                                            lme.Side.BUY)
+            self.assertEqual(0, len(trades))
+            self.check_order_book(me, TestBasicOrders.instmt, 1, 0)
+            self.assertEqual(i, len(me.order_books[TestBasicOrders.instmt].bids[TestBasicOrders.price]))
+            self.check_order(buy_order, i, TestBasicOrders.instmt, TestBasicOrders.price, \
+                            TestBasicOrders.lot_size, lme.Side.BUY, 0, TestBasicOrders.lot_size)     
+        
+        # Place sell orders
+        sell_order, trades = me.add_order(TestBasicOrders.instmt, \
+                            0, \
+                            10.0 * TestBasicOrders.lot_size, \
+                            lme.Side.SELL)   
+        self.check_order_book(me, TestBasicOrders.instmt, 0, 0)
+        self.assertEqual(11, len(trades))   
+        self.check_order(buy_order, 10, TestBasicOrders.instmt, TestBasicOrders.price, \
+                        TestBasicOrders.lot_size, lme.Side.BUY, TestBasicOrders.lot_size, 0)         
+        self.check_order(sell_order, 11, TestBasicOrders.instmt, 0, \
+                        10*TestBasicOrders.lot_size, lme.Side.SELL, 10*TestBasicOrders.lot_size, 0)        
+        
+        # Check aggressive hit orders - Trade price is same as the passive hit limit price
+        self.check_trade(trades[0], sell_order.order_id, sell_order.instmt, \
+                         buy_order.price, sell_order.qty, sell_order.side, 1)
+        
+        # Check passive hit orders
+        for i in range(1, 11):
+            self.check_trade(trades[i], i, buy_order.instmt, \
+                             buy_order.price, buy_order.qty, buy_order.side, i+1)          
+    
+    def test_fill_multiple_orders_different_level_market_order(self):
+        me = lme.LightMatchingEngine()
+        
+        # Place buy orders
+        for i in range(1, 11):
+            buy_order, trades = me.add_order(TestBasicOrders.instmt, \
+                                            TestBasicOrders.price+i, \
+                                            TestBasicOrders.lot_size, \
+                                            lme.Side.BUY)
+            self.assertEqual(0, len(trades))
+            self.check_order_book(me, TestBasicOrders.instmt, i, 0)
+            self.assertEqual(1, len(me.order_books[TestBasicOrders.instmt].bids[TestBasicOrders.price+i]))
+            self.check_order(buy_order, i, TestBasicOrders.instmt, TestBasicOrders.price+i, \
+                            TestBasicOrders.lot_size, lme.Side.BUY, 0, TestBasicOrders.lot_size)     
+        
+        # Place sell orders
+        sell_order, trades = me.add_order(TestBasicOrders.instmt, \
+                            0, \
+                            10.0 * TestBasicOrders.lot_size, \
+                            lme.Side.SELL)   
+        self.check_order_book(me, TestBasicOrders.instmt, 0, 0)
+        self.assertEqual(20, len(trades))   
+        self.check_order(buy_order, 10, TestBasicOrders.instmt, TestBasicOrders.price+10, \
+                        TestBasicOrders.lot_size, lme.Side.BUY, TestBasicOrders.lot_size, 0)         
+        self.check_order(sell_order, 11, TestBasicOrders.instmt, 0, \
+                        10*TestBasicOrders.lot_size, lme.Side.SELL, 10*TestBasicOrders.lot_size, 0)        
+        
+        for i in range(0, 10):
+            match_price = TestBasicOrders.price+10-i
+            self.check_trade(trades[2*i], sell_order.order_id, sell_order.instmt, \
+                             match_price, TestBasicOrders.lot_size, sell_order.side, 2*i+1)
+            self.check_trade(trades[2*i+1], 10-i, buy_order.instmt, \
+                             match_price, TestBasicOrders.lot_size, buy_order.side, 2*i+2)
+                             
 if __name__ == '__main__':
     unittest.main()    
