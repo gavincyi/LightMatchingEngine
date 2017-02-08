@@ -5,5 +5,8 @@ python:
   - 3.4
   - pypy
 
+install:
+  - pip install .
+
 script: 
   - pytest
