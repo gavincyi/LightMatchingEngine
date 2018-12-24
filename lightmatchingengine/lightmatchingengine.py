@@ -93,7 +93,7 @@ class LightMatchingEngine(object):
             while best_price is not None and \
                   (price == 0.0 or price >= best_price ) and \
                   order.leaves_qty > 0:
-                best_price_qty = sum([ask.qty for ask in order_book.asks[best_price]]) 
+                best_price_qty = sum([ask.leaves_qty for ask in order_book.asks[best_price]])
                 match_qty = min(best_price_qty, order.leaves_qty)
                 assert match_qty > 0, "Match quantity must be larger than zero"
                 
@@ -141,7 +141,7 @@ class LightMatchingEngine(object):
             while best_price is not None and \
                   (price == 0.0 or price <= best_price) and \
                   order.leaves_qty > 0:
-                best_price_qty = sum([bid.qty for bid in order_book.bids[best_price]]) 
+                best_price_qty = sum([bid.leaves_qty for bid in order_book.bids[best_price]])
                 match_qty = min(best_price_qty, order.leaves_qty)
                 assert match_qty > 0, "Match quantity must be larger than zero"
                 
