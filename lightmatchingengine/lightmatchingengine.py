@@ -105,7 +105,6 @@ class LightMatchingEngine(object):
                                     Side.BUY, self.curr_trade_id))
                 
                 # Generate the passive executions
-                index = 0
                 while match_qty > 0:
                     # The order hit
                     hit_order = order_book.asks[best_price][0]
@@ -153,7 +152,6 @@ class LightMatchingEngine(object):
                                     Side.SELL, self.curr_trade_id))
                 
                 # Generate the passive executions
-                index = 0
                 while match_qty > 0:
                     # The order hit
                     hit_order = order_book.bids[best_price][0]
@@ -220,6 +218,7 @@ class LightMatchingEngine(object):
             if price_level[index].order_id == order_id:
                 del price_level[index]
                 break
+            index += 1
         
         if index == price_level_len:
             # Cannot find the order ID. Incorrect side
