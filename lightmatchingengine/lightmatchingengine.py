@@ -187,7 +187,7 @@ class LightMatchingEngine(object):
         """
         Cancel order
         :param order_id     Order ID
-        :param side         Side
+        :param instmt       Instrument
         :return The order if the cancellation is successful
         """
         assert instmt in self.order_books.keys(), \
