@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-class Side:
+class Side(object):
     """
     Side
     """
