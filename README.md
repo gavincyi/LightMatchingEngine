@@ -63,7 +63,7 @@ print("Trade side = %d" % trades[0].trade_side)             # Trade side = 2
 Failing to delete an order returns a None value.
 
 ```
-del_order = lme.cancel_order(9999, order.instmt, order.side)
+del_order = lme.cancel_order(9999, order.instmt)
 print("Is order deleted = %d" % (del_order is not None))    # Is order deleted = 0
 ```
 
