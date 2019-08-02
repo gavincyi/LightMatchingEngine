@@ -9,4 +9,4 @@ install:
   - pip install .
 
 script: 
-  - python -m unittest discover
+  - make test
