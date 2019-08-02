@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="LightMatchingEngine",
+    name="lightmatchingengine",
     url="https://github.com/gavincyi/LightMatchingEngine",
     license='MIT',
 
