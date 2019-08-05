@@ -94,6 +94,29 @@ The trade object contains the following information:
 * Trade quantity (trade_qty)
 * Trade side (trade_side)
 
+## Performance
+
+To run the performance test, run the commands
+
+```
+pip install lightmatchingengine[performance]
+python tests/performance/performance_test.py --freq 20
+```
+
+It returns the latency in nanosecond like below
+
+|       |      add |   cancel |   add (trade > 0) |   add (trade > 2.0) |
+|:------|---------:|---------:|------------------:|--------------------:|
+| count | 100      |  61      |           27      |               6     |
+| mean  | 107.954  |  50.3532 |          164.412  |             205.437 |
+| std   |  58.1438 |  16.3396 |           36.412  |              24.176 |
+| min   |  17.1661 |  11.4441 |           74.1482 |             183.105 |
+| 25%   |  81.3007 |  51.9753 |          141.382  |             188.47  |
+| 50%   |  92.5064 |  58.4126 |          152.349  |             200.748 |
+| 75%   | 140.19   |  59.3662 |          190.496  |             211.239 |
+| max   | 445.604  |  71.0487 |          248.909  |             248.909 |
+
+
 ## Contact
 
 For any inquiries, please feel free to contact me by gavincyi at gmail dot com.
