@@ -205,11 +205,11 @@ class LightMatchingEngine(object):
 
         if side == Side.BUY:
             assert order_price in order_book.bids.keys(), \
-                 "Order price %.6f is not in the bid price depth"
+                 "Order price %.6f is not in the bid price depth" % order_price
             price_level = order_book.bids[order_price]
         else:
             assert order_price in order_book.asks.keys(), \
-                 "Order price %.6f is not in the ask price depth"
+                 "Order price %.6f is not in the ask price depth" % order_price
             price_level = order_book.asks[order_price]
 
         index = 0

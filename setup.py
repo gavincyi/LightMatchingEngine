@@ -18,6 +18,9 @@ setup(
     tests_require=[
 	'pytest'
     ],
+    extra_requires={
+        'performance': ['pandas']
+    },
 
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
