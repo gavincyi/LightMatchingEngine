@@ -104,7 +104,7 @@ cdef class LightMatchingEngine:
                             else None
             while best_price is not None and \
                   (price == 0.0 or price >= best_price ) and \
-                  order.leaves_qty > 0:
+                  order.leaves_qty > 0.0:
                 best_price_qty = sum([ask.leaves_qty for ask in order_book.asks[best_price]])
                 match_qty = min(best_price_qty, order.leaves_qty)
                 assert match_qty > 0, "Match quantity must be larger than zero"
@@ -117,7 +117,7 @@ cdef class LightMatchingEngine:
                                     Side.BUY, self.curr_trade_id))
 
                 # Generate the passive executions
-                while match_qty > 0:
+                while match_qty > 0.0:
                     # The order hit
                     hit_order = order_book.asks[best_price][0]
                     # The order quantity hit
@@ -141,7 +141,7 @@ cdef class LightMatchingEngine:
                                 else None
 
             # Add the remaining order into the depth
-            if order.leaves_qty > 0:
+            if order.leaves_qty > 0.0:
                 depth = order_book.bids.setdefault(price, [])
                 depth.append(order)
                 order_book.order_id_map[order_id] = order
@@ -164,7 +164,7 @@ cdef class LightMatchingEngine:
                                     Side.SELL, self.curr_trade_id))
 
                 # Generate the passive executions
-                while match_qty > 0:
+                while match_qty > 0.0:
                     # The order hit
                     hit_order = order_book.bids[best_price][0]
                     # The order quantity hit
@@ -188,7 +188,7 @@ cdef class LightMatchingEngine:
                                 else None
 
             # Add the remaining order into the depth
-            if order.leaves_qty > 0:
+            if order.leaves_qty > 0.0:
                 depth = order_book.asks.setdefault(price, [])
                 depth.append(order)
                 order_book.order_id_map[order_id] = order
