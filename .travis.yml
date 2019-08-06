@@ -10,4 +10,4 @@ install:
 
 script: 
   - make test
-  - python tests/performance/performance_test.py --freq 20
+  - python tests/performance/performance_test.py --freq 20 --num-orders 500
