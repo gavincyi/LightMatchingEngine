@@ -18,7 +18,7 @@ setup(
     tests_require=[
 	'pytest'
     ],
-    extra_requires={
+    extras_require={
         'performance': ['pandas', 'docopt', 'tabulate']
     },
 
