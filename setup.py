@@ -19,7 +19,7 @@ setup(
 	'pytest'
     ],
     extra_requires={
-        'performance': ['pandas']
+        'performance': ['pandas', 'docopt', 'tabulate']
     },
 
     classifiers=[
