@@ -1,28 +1,18 @@
 #!/usr/bin/python3
-class Side(object):
-    """
-    Side
-    """
+cpdef enum Side:
     BUY = 1
     SELL = 2
 
-class OrderBook(object):
-    """
-    Order book
-    """
-    def __init__(self):
-        """
-        Constructor
-        """
-        self.bids = {}
-        self.asks = {}
-        self.order_id_map = {}
 
+cdef class Order:
+    cdef public int order_id
+    cdef public str instmt
+    cdef public double price
+    cdef public double qty
+    cdef public double cum_qty
+    cdef public double leaves_qty
+    cdef public Side side
 
-class Order(object):
-    """
-    Order
-    """
     def __init__(self, order_id, instmt, price, qty, side):
         """
         Constructor
@@ -36,10 +26,28 @@ class Order(object):
         self.side = side
 
 
-class Trade(object):
-    """
-    Trade
-    """
+cdef class OrderBook:
+    cdef public dict bids
+    cdef public dict asks
+    cdef public dict order_id_map
+
+    def __init__(self):
+        """
+        Constructor
+        """
+        self.bids = {}
+        self.asks = {}
+        self.order_id_map = {}
+
+
+cdef class Trade:
+    cdef public int order_id
+    cdef public str instmt
+    cdef public double trade_price
+    cdef public double trade_qty
+    cdef public Side trade_side
+    cdef public int trade_id
+
     def __init__(self, order_id, instmt, trade_price, trade_qty, trade_side, trade_id):
         """
         Constructor
@@ -52,10 +60,11 @@ class Trade(object):
         self.trade_id = trade_id
 
 
-class LightMatchingEngine(object):
-    """
-    Light matching engine
-    """
+cdef class LightMatchingEngine:
+    cdef public dict order_books
+    cdef public int curr_order_id
+    cdef public int curr_trade_id
+
     def __init__(self):
         """
         Constructor
@@ -64,7 +73,7 @@ class LightMatchingEngine(object):
         self.curr_order_id = 0
         self.curr_trade_id = 0
 
-    def add_order(self, instmt, price, qty, side):
+    cpdef add_order(self, str instmt, double price, double qty, Side side):
         """
         Add an order
         :param instmt       Instrument name
@@ -74,6 +83,10 @@ class LightMatchingEngine(object):
         :return The order and the list of trades.
                 Empty list if there is no matching.
         """
+        cdef list trades = []
+        cdef int order_id
+        cdef Order order
+
         assert side == Side.BUY or side == Side.SELL, \
                 "Invalid side %s" % side
 
@@ -81,7 +94,6 @@ class LightMatchingEngine(object):
         order_book = self.order_books.setdefault(instmt, OrderBook())
 
         # Initialization
-        trades = []
         self.curr_order_id += 1
         order_id = self.curr_order_id
         order = Order(order_id, instmt, price, qty, side)
@@ -183,13 +195,18 @@ class LightMatchingEngine(object):
 
         return order, trades
 
-    def cancel_order(self, order_id, instmt):
+    cpdef cancel_order(self, int order_id, str instmt):
         """
         Cancel order
         :param order_id     Order ID
         :param instmt       Instrument
         :return The order if the cancellation is successful
         """
+        cdef Order order
+        cdef double order_price
+        cdef Side side
+        cdef int index
+
         assert instmt in self.order_books.keys(), \
                 "Instrument %s is not valid in the order book" % instmt
         order_book = self.order_books[instmt]
@@ -238,6 +255,3 @@ class LightMatchingEngine(object):
         order.leaves_qty = 0
 
         return order
-
-
-
