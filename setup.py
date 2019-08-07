@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
 
 setup(
     name="lightmatchingengine",
@@ -14,12 +14,15 @@ setup(
 
     use_scm_version=True,
     install_requires=[],
-    setup_requires=['setuptools_scm'],
+    setup_requires=['setuptools_scm', 'cython'],
+    ext_modules=[Extension(
+        'lightmatchingengine.lightmatchingengine',
+        ['lightmatchingengine/lightmatchingengine.pyx'])],
     tests_require=[
 	'pytest'
     ],
-    extra_requires={
-        'performance': ['pandas']
+    extras_require={
+        'performance': ['pandas', 'docopt', 'tabulate', 'tqdm']
     },
 
     classifiers=[

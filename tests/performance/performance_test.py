@@ -79,13 +79,13 @@ def run(args):
                          order.order_id, order.side, order.price, order.qty)
 
             # Save the order if there is any quantity left
-            if order.leaves_qty > 0:
+            if order.leaves_qty > 0.0:
                 orders[order.order_id] = order
 
             # Remove the trades
             for trade in trades:
                 if (trade.order_id != order.order_id and
-                    orders[trade.order_id].leaves_qty == 0.0):
+                    orders[trade.order_id].leaves_qty < 1e-9):
                     del orders[trade.order_id]
 
             # Save the statistics
