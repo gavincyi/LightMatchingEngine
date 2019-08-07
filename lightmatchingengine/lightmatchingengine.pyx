@@ -104,7 +104,7 @@ cdef class LightMatchingEngine:
                             else None
             while best_price is not None and \
                   (price == 0.0 or price >= best_price ) and \
-                  order.leaves_qty > 0.0:
+                  order.leaves_qty >= 1e-9:
                 best_price_qty = sum([ask.leaves_qty for ask in order_book.asks[best_price]])
                 match_qty = min(best_price_qty, order.leaves_qty)
                 assert match_qty > 0, "Match quantity must be larger than zero"
@@ -117,7 +117,7 @@ cdef class LightMatchingEngine:
                                     Side.BUY, self.curr_trade_id))
 
                 # Generate the passive executions
-                while match_qty > 0.0:
+                while match_qty >= 1e-9:
                     # The order hit
                     hit_order = order_book.asks[best_price][0]
                     # The order quantity hit
@@ -129,7 +129,7 @@ cdef class LightMatchingEngine:
                     hit_order.cum_qty += order_match_qty
                     hit_order.leaves_qty -= order_match_qty
                     match_qty -= order_match_qty
-                    if hit_order.leaves_qty == 0:
+                    if hit_order.leaves_qty < 1e-9:
                         del order_book.asks[best_price][0]
 
                 # If the price does not have orders, delete the particular price depth
@@ -151,10 +151,10 @@ cdef class LightMatchingEngine:
                             else None
             while best_price is not None and \
                   (price == 0.0 or price <= best_price) and \
-                  order.leaves_qty > 0:
+                  order.leaves_qty >= 1e-9:
                 best_price_qty = sum([bid.leaves_qty for bid in order_book.bids[best_price]])
                 match_qty = min(best_price_qty, order.leaves_qty)
-                assert match_qty > 0, "Match quantity must be larger than zero"
+                assert match_qty >= 1e-9, "Match quantity must be larger than zero"
 
                 # Generate aggressive order trade first
                 self.curr_trade_id += 1
@@ -164,7 +164,7 @@ cdef class LightMatchingEngine:
                                     Side.SELL, self.curr_trade_id))
 
                 # Generate the passive executions
-                while match_qty > 0.0:
+                while match_qty >= 1e-9:
                     # The order hit
                     hit_order = order_book.bids[best_price][0]
                     # The order quantity hit
@@ -176,7 +176,7 @@ cdef class LightMatchingEngine:
                     hit_order.cum_qty += order_match_qty
                     hit_order.leaves_qty -= order_match_qty
                     match_qty -= order_match_qty
-                    if hit_order.leaves_qty == 0:
+                    if hit_order.leaves_qty < 1e-9:
                         del order_book.bids[best_price][0]
 
                 # If the price does not have orders, delete the particular price depth
@@ -188,7 +188,7 @@ cdef class LightMatchingEngine:
                                 else None
 
             # Add the remaining order into the depth
-            if order.leaves_qty > 0.0:
+            if order.leaves_qty >= 1e-9:
                 depth = order_book.asks.setdefault(price, [])
                 depth.append(order)
                 order_book.order_id_map[order_id] = order

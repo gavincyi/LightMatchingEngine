@@ -85,7 +85,7 @@ def run(args):
             # Remove the trades
             for trade in trades:
                 if (trade.order_id != order.order_id and
-                    orders[trade.order_id].leaves_qty == 0.0):
+                    orders[trade.order_id].leaves_qty < 1e-9):
                     del orders[trade.order_id]
 
             # Save the statistics
