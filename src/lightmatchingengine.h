@@ -7,6 +7,8 @@
 #include <deque>
 #include <deque>
 #include <algorithm>
+#include <stdexcept>
+#include <sstream>
 
 using namespace std;
 
@@ -22,19 +24,25 @@ using namespace std;
 #define qty_t double
 #define id_t long long
 
-enum Side {
+enum class Side {
   BUY = 1,
   SELL = 2
 };
 
 struct Order {
   id_t order_id;
-  const string& instmt;
+  string instmt;
   price_t price;
   qty_t qty;
   qty_t cum_qty;
   qty_t leaves_qty;
   Side side;
+
+  /* Order() = default; */
+  /* Order(const Order&) = default; */
+  /* Order& operator=(Order&) = default; */
+  /* Order(Order&&) = default; */
+  /* Order& operator=(Order&&) = default; */
 
   Order(id_t order_id, const string& instmt, price_t price, qty_t qty, Side side): 
       order_id(order_id),
@@ -237,6 +245,51 @@ class LightMatchingEngine {
         }
 
         return make_tuple(order, trades);
+    }
+
+    Order& cancel_order(id_t order_id, const string& instmt) {
+        auto order_book_it = __order_books.find(instmt);
+        if (order_book_it == __order_books.end()) {
+            auto err_message = string("Order books do not have the instrument ") + instmt;
+            throw runtime_error(err_message);
+        }
+
+        auto order_book = order_book_it->second;
+        auto order_it = order_book.order_id_map.find(order_id);
+        if (order_it == order_book.order_id_map.end()) {
+            ostringstream sstream;
+            sstream << "Cannot find order " << order_id << " from instrument " << instmt;
+            throw runtime_error(sstream.str());
+        }
+
+        auto order = order_it->second;
+        auto nprice = NORMALIZE_PRICE(order.price);
+        
+        if (order.side == Side::BUY) {
+            auto order_queue_it = order_book.bids.find(nprice);
+            assert(order_queue_it != order_book.bids.end());
+            auto order_queue = order_queue_it->second;
+            auto found_order = find_if(
+                order_queue.begin(), order_queue.end(), [&order](auto o) { return o.order_id == order.order_id; });
+
+            // Remove the order from the matching engine
+            order_queue.erase(found_order);
+        } else {
+            auto order_queue_it = order_book.asks.find(nprice);
+            assert(order_queue_it != order_book.asks.end());
+            auto order_queue = order_queue_it->second;
+            auto found_order = find_if(
+                order_queue.begin(), order_queue.end(), [&order](auto o) { return o.order_id == order.order_id; });
+
+            // Remove the order from the matching engine
+            order_queue.erase(found_order);
+        }
+
+        // Finally set the leaves qty to 0
+        order.leaves_qty = 0.0;
+        order_book.order_id_map.erase(order_it);
+
+        return order;
     }
 
   private:

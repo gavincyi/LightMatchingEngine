@@ -28,4 +28,9 @@ PYBIND11_MODULE(lightmatchingengine, m) {
             double,
             Side,
             int>());
+
+    // Class LightMatchingEngine
+    py::class_<LightMatchingEngine>(m, "LightMatchingEngine")
+        .def(py::init())
+        .def("add_order", &LightMatchingEngine::add_order);
 }
