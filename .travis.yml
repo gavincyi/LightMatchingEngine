@@ -1,12 +1,24 @@
 language: python
 
-python:
-  - 2.7
-  - 3.4
-  - 3.5
-  - 3.6
-  - 3.7
-  - pypy
+# python:
+#   - 2.7
+#   - 3.4
+#   - 3.5
+#   - 3.6
+#   - 3.7
+#   - pypy
+matrix:
+  include:
+    - os: linux
+      compiler: gcc
+      addons: &gcc49
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['g++-4.9', 'gcc-4.9']
+      env:
+        - CXX='g++-4.9'
+        - CC='gcc-4.9'
+	  python: 3.4
 
 install:
   - pip install .[performance]
