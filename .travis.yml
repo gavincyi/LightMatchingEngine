@@ -9,16 +9,26 @@ language: python
 #   - pypy
 matrix:
   include:
-    - os: linux
-      compiler: gcc
-      addons: &gcc49
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-4.9', 'gcc-4.9']
-      env:
-        - CXX='g++-4.9'
-        - CC='gcc-4.9'
-      python: 3.4
+  - os: linux
+    dist: trusty
+    name: Python 3.5, c++14, gcc 6, Debug build
+    # N.B. `ensurepip` could be installed transitively by `python3.5-venv`, but
+    # seems to have apt conflicts (at least for Trusty). Use Docker instead.
+    services: docker
+    env: DOCKER=debian:stretch PYTHON=3.5 CPP=14 GCC=6 DEBUG=1
+  - os: linux
+    dist: xenial
+    env: PYTHON=3.6 CPP=17 GCC=7
+    name: Python 3.6, c++17, gcc 7
+    addons:
+      apt:
+        sources:
+          - deadsnakes
+          - ubuntu-toolchain-r-test
+        packages:
+          - g++-7
+          - python3.6-dev
+          - python3.6-venv
 
 install:
   - pip install .[performance]
