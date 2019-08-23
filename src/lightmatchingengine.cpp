@@ -32,5 +32,9 @@ PYBIND11_MODULE(lightmatchingengine, m) {
     // Class LightMatchingEngine
     py::class_<LightMatchingEngine>(m, "LightMatchingEngine")
         .def(py::init())
-        .def("add_order", &LightMatchingEngine::add_order);
+        .def("add_order", &LightMatchingEngine::add_order)
+        .def("cancel_order", &LightMatchingEngine::cancel_order)
+        .def_property_readonly("order_books", &LightMatchingEngine::order_books)
+        .def_property_readonly("curr_order_id", &LightMatchingEngine::curr_order_id)
+        .def_property_readonly("curr_trade_id", &LightMatchingEngine::curr_trade_id);
 }
