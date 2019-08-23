@@ -37,7 +37,8 @@ install:
 script: 
   - pip freeze
   - which python
-  - ls -lah /home/travis/build/gavincyi/LightMatchingEngine/env/lib/
+  - ls -lah /home/travis/build/gavincyi/LightMatchingEngine/env/lib/python3.6
+  - ls -lah /home/travis/build/gavincyi/LightMatchingEngine/env/lib/python3.6/site-packages
   - ls -lah /home/travis/build/gavincyi/LightMatchingEngine/env/lib/python3.6/site-packages/lightmatchingengine
   - python -c "import lightmatchingengine"
   - python -c "import lightmatchingengine.lightmatchingengine"
