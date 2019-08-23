@@ -25,7 +25,7 @@ matrix:
 
 before_install:
   - |
-    virtualenv env
+    virtualenv -p python3.6 env
     source env/bin/activate
 
 install:
@@ -34,5 +34,5 @@ install:
     python -m pip install .[performance]
     
 script: 
-  - python -m pytest tests/unit
+  - pytest tests/unit
   - python tests/performance/performance_test.py --freq 20 --num-orders 500
