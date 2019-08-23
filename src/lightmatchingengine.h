@@ -4,15 +4,12 @@
 #include <string>
 #include <limits>
 #include <tuple>
-#include <map>
-#include <unordered_map>
-#include <deque>
-#include <deque>
 #include <algorithm>
 #include <stdexcept>
 #include <sstream>
 
 using namespace std;
+namespace py = pybind11;
 
 #define MIN_NPRICE LLONG_MIN
 #define MAX_NPRICE LLONG_MAX
@@ -58,7 +55,7 @@ struct Order {
 
 struct Trade {
   id_t order_id;
-  const string& instmt;
+  string instmt;
   price_t trade_price;
   qty_t trade_qty;
   Side trade_side;
@@ -74,11 +71,22 @@ struct Trade {
       trade_id(trade_id) {}
 };
 
+PYBIND11_MAKE_OPAQUE(map<nprice_t, deque<Order>>);
+PYBIND11_MAKE_OPAQUE(unordered_map<id_t, Order>);
+
 struct OrderBook {
     map<nprice_t, deque<Order>> bids;
     map<nprice_t, deque<Order>> asks;
     unordered_map<id_t, Order> order_id_map;
+
+    OrderBook() = default;
+    OrderBook(const OrderBook&) = delete;
+    OrderBook(OrderBook&&) = default;
+    OrderBook& operator=(OrderBook&&) = default;
+    OrderBook& operator=(const OrderBook&) = delete;
 };
+
+PYBIND11_MAKE_OPAQUE(unordered_map<string, OrderBook>);
 
 class LightMatchingEngine {
   public:
@@ -108,7 +116,7 @@ class LightMatchingEngine {
             order_book_it = __order_books.emplace(instmt, OrderBook()).first;
         }
 
-        auto order_book = order_book_it->second;
+        auto& order_book = order_book_it->second;
 
         if (side == Side::BUY) {
             nprice_t best_nprice = MAX_NPRICE;
@@ -117,14 +125,16 @@ class LightMatchingEngine {
             }
 
             while (nprice >= best_nprice && order.leaves_qty > MIN_QUANTITY) {
-                auto nbbo = order_book.asks.begin()->second;
+                auto& nbbo = order_book.asks.begin()->second;
                 auto original_leaves_qty = order.leaves_qty;
 
                 // Matching the ask queue
                 while (nbbo.size() > 0) {
                     auto front_nbbo = nbbo.front();
                     qty_t matching_qty = min(order.leaves_qty, nbbo[0].leaves_qty);
+                    order.cum_qty += matching_qty;
                     order.leaves_qty -= matching_qty;
+                    front_nbbo.cum_qty += matching_qty;
                     front_nbbo.leaves_qty -= matching_qty;
 
                     // Trades on the passive order
@@ -173,7 +183,7 @@ class LightMatchingEngine {
                     nbbo_it = order_book.bids.emplace(nprice, deque<Order>()).first;
                 }
 
-                auto nbbo = nbbo_it->second;
+                auto& nbbo = nbbo_it->second;
                 nbbo.emplace_back(order);
                 order_book.order_id_map.emplace(order.order_id, order);
             }
@@ -184,14 +194,16 @@ class LightMatchingEngine {
             }
 
             while (nprice <= best_nprice && order.leaves_qty > MIN_QUANTITY) {
-                auto nbbo = order_book.bids.begin()->second;
+                auto& nbbo = order_book.bids.begin()->second;
                 auto original_leaves_qty = order.leaves_qty;
 
                 // Matching the ask queue
                 while (nbbo.size() > 0) {
                     auto front_nbbo = nbbo.front();
                     qty_t matching_qty = min(order.leaves_qty, nbbo[0].leaves_qty);
+                    order.cum_qty += matching_qty;
                     order.leaves_qty -= matching_qty;
+                    front_nbbo.cum_qty += matching_qty;
                     front_nbbo.leaves_qty -= matching_qty;
 
                     // Trades on the passive order
@@ -237,10 +249,14 @@ class LightMatchingEngine {
             if (order.leaves_qty > MIN_QUANTITY) {
                 auto nbbo_it = order_book.asks.find(nprice);
                 if (nbbo_it == order_book.asks.end()){
+                    order.cum_qty += matching_qty;
+                    order.leaves_qty -= matching_qty;
+                    front_nbbo.cum_qty += matching_qty;
+                    front_nbbo.leaves_qty -= matching_qty;
                     nbbo_it = order_book.asks.emplace(nprice, deque<Order>()).first;
                 }
 
-                auto nbbo = nbbo_it->second;
+                auto& nbbo = nbbo_it->second;
                 nbbo.emplace_back(order);
                 order_book.order_id_map.emplace(order.order_id, order);
             }
@@ -256,7 +272,7 @@ class LightMatchingEngine {
             throw runtime_error(err_message);
         }
 
-        auto order_book = order_book_it->second;
+        auto& order_book = order_book_it->second;
         auto order_it = order_book.order_id_map.find(order_id);
         if (order_it == order_book.order_id_map.end()) {
             ostringstream sstream;
@@ -264,13 +280,13 @@ class LightMatchingEngine {
             throw runtime_error(sstream.str());
         }
 
-        auto order = order_it->second;
+        auto& order = order_it->second;
         auto nprice = NORMALIZE_PRICE(order.price);
         
         if (order.side == Side::BUY) {
             auto order_queue_it = order_book.bids.find(nprice);
             assert(order_queue_it != order_book.bids.end());
-            auto order_queue = order_queue_it->second;
+            auto& order_queue = order_queue_it->second;
             auto found_order = find_if(
                 order_queue.begin(), order_queue.end(), [&order](auto o) { return o.order_id == order.order_id; });
 
