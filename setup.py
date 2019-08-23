@@ -19,7 +19,7 @@ class get_pybind_include(object):
 
 ext_modules = [
     Extension(
-        'lightmatchingengine',
+        'lightmatchingengine.lightmatchingengine',
         ['src/lightmatchingengine.cpp'],
         include_dirs=[
             # Path to pybind11 headers
