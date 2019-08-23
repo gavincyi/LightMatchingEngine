@@ -106,7 +106,7 @@ setup(
     packages=find_packages(exclude=('tests',)),
 
     # use_scm_version=True,
-    version='0.1.0',
+    version='2019.2',
     install_requires=['pybind11'],
     # setup_requires=['setuptools_scm', 'cython'],
     setup_requires=['setuptools_scm', 'pybind11'],
