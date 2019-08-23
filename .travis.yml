@@ -32,7 +32,10 @@ install:
    - |
     python -m pip install 'pybind11>=2.3'
     python -m pip install .[performance]
+    python -m pip install pytest
     
 script: 
+  - pip freeze
+  - which python
   - pytest tests/unit
   - python tests/performance/performance_test.py --freq 20 --num-orders 500
