@@ -30,10 +30,17 @@ matrix:
           - python3.6-dev
           - python3.6-venv
 
-install:
-  - pip install 'pybind11>=2.3'
-  - pip install .[performance]
+before_install:
+  - |
+    virtualenv env
+    source env/bin/active
 
+install:
+   - |
+    python setup.py sdist
+    python -m pip install 'pybind11>=2.3'
+    python -m pip install --verbose dist/*.tar.gz
+    
 script: 
   - make test
   - python tests/performance/performance_test.py --freq 20 --num-orders 500
