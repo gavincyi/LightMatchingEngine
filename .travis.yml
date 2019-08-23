@@ -37,5 +37,7 @@ install:
 script: 
   - pip freeze
   - which python
+  - python -c "import lightmatchingengine"
+  - python -c "import lightmatchingengine.lightmatchingengine"
   - pytest tests/unit
   - python tests/performance/performance_test.py --freq 20 --num-orders 500
