@@ -33,7 +33,7 @@ matrix:
 before_install:
   - |
     virtualenv env
-    source env/bin/active
+    source env/bin/activate
 
 install:
    - |
