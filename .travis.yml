@@ -27,6 +27,7 @@ before_install:
   - |
     virtualenv -p python3.6 env
     source env/bin/activate
+    python -m pip install -U pip setuptools wheel
 
 install:
    - |
