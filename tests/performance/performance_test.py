@@ -15,6 +15,7 @@ Options:
     --tick-size=<tick-size>     Tick size. [Default: 0.1]
     --gamma-quantity=<gamma>    Gamma value in the gamma distribution for the
                                 order quantity. [Default: 2]
+    --debug                     Debug mode.
 """
 from docopt import docopt
 import logging
@@ -67,16 +68,21 @@ def run(args):
         if uniform(0, 1) <= add_order_prob or len(orders) == 0:
             price = np.random.standard_normal() * std_price + mean_price
             price = int(price / tick_size) * tick_size
-            quantity = np.random.gamma(gamma_quantity) + 1
+            quantity = int(np.random.gamma(gamma_quantity)) + 1
             side = Side.BUY if uniform(0, 1) <= 0.5 else Side.SELL
+
+            LOGGER.debug('Adding order at side %s, price %s '
+                         'and quantity %s',
+                         side, price, quantity)
 
             # Add the order
             with Timer() as timer:
                 order, trades = engine.add_order(symbol, price, quantity, side)
 
             LOGGER.debug('Order %s is added at side %s, price %s '
-                         'and quantity %s',
-                         order.order_id, order.side, order.price, order.qty)
+                         'and quantity %s, with %s trades',
+                         order.order_id, order.side, order.price, order.qty,
+                         len(trades))
 
             # Save the order if there is any quantity left
             if order.leaves_qty > 0.0:
@@ -84,6 +90,8 @@ def run(args):
 
             # Remove the trades
             for trade in trades:
+                LOGGER.debug('Trade of order id %s is detected with trade '
+                             'qty %s', trade.order_id, trade.trade_qty)
                 if (trade.order_id != order.order_id and
                     orders[trade.order_id].leaves_qty < 1e-9):
                     del orders[trade.order_id]
@@ -100,10 +108,13 @@ def run(args):
 
             order_id = list(orders.keys())[index]
 
+            LOGGER.debug('Deleting order %s', order_id)
+
             with Timer() as timer:
                 engine.cancel_order(order_id, order.instmt)
 
             LOGGER.debug('Order %s is deleted', order_id)
+
             del orders[order_id]
 
             # Save the statistics
@@ -153,7 +164,10 @@ def describe_statistics(add_statistics, cancel_statistics):
 
 if __name__ == '__main__':
     args = docopt(__doc__, version='1.0.0')
-    logging.basicConfig(level=logging.INFO)
+    if args['--debug']:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
 
     LOGGER.info('Running the performance benchmark')
     add_statistics, cancel_statistics = run(args)
