@@ -1,16 +1,47 @@
 language: python
 
-python:
-  - 2.7
-  - 3.4
-  - 3.5
-  - 3.6
-  - 3.7
-  - pypy
+# python:
+#   - 2.7
+#   - 3.4
+#   - 3.5
+#   - 3.6
+#   - 3.7
+#   - pypy
+matrix:
+  include:
+  - os: linux
+    dist: xenial
+    env: PYTHON=3.6 CPP=17 GCC=7
+    name: Python 3.6, c++17, gcc 7
+    addons:
+      apt:
+        sources:
+          - deadsnakes
+          - ubuntu-toolchain-r-test
+        packages:
+          - g++-7
+          - python3.6-dev
+          - python3.6-venv
+
+before_install:
+  - |
+    virtualenv -p python3.6 env
+    source env/bin/activate
+    python -m pip install -U pip setuptools wheel
 
 install:
-  - pip install .[performance]
-
+   - |
+    python -m pip install 'pybind11>=2.3'
+    python -m pip install .[performance]
+    python -m pip install pytest
+    
 script: 
-  - make test
+  - pip freeze
+  - which python
+  - ls -lah /home/travis/build/gavincyi/LightMatchingEngine/env/lib/python3.6
+  - ls -lah /home/travis/build/gavincyi/LightMatchingEngine/env/lib/python3.6/site-packages
+  - ls -lah /home/travis/build/gavincyi/LightMatchingEngine/env/lib/python3.6/site-packages/lightmatchingengine
+  - python -c "import lightmatchingengine"
+  - python -c "import lightmatchingengine.lightmatchingengine"
+  - pytest tests/unit
   - python tests/performance/performance_test.py --freq 20 --num-orders 500
