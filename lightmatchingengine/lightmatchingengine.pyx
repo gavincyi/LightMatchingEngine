@@ -255,3 +255,59 @@ cdef class LightMatchingEngine:
         order.leaves_qty = 0
 
         return order
+
+    cpdef amend_order(self, int order_id, str instmt, double amended_price,
+                      double amended_qty):
+        """
+        Amend an order
+        :param order_id         Order ID
+        :param instmt           Instrument
+        :param amended_price    Amended price, defined as zero if market order
+        :param amended_qty      Amended order quantity
+        :return The order and the list of trades.
+                Empty list if there is no matching.
+        """
+        cdef Order order
+        cdef double order_price
+        cdef Side side
+        cdef int index
+
+        assert instmt in self.order_books.keys(), \
+                "Instrument %s is not valid in the order book" % instmt
+        order_book = self.order_books[instmt]
+
+        if order_id not in order_book.order_id_map.keys():
+            # Invalid order id
+            return None
+
+        order = order_book.order_id_map[order_id]
+        order_price = order.price
+
+        assert amended_qty - order.cum_qty >= 1e-9, (
+            "The amended qty (%s) cannot be amended below the cum qty (%s)"
+            % (amended_qty, order.cum_qty)
+        )
+
+        if (abs(order_price - amended_price) < 1e-9 and
+                amended_qty <= order.qty):
+            # The priority queue is not changed as the quantity of the
+            # order is reduced
+            order.leaves_qty -= (order.qty - amended_qty)
+            order.qty = amended_qty
+
+            # Return amended order without any trades
+            return order, []
+
+        # Otherwise cancel the order and add a new order
+        old_order = self.cancel_order(order_id=order_id, instmt=instmt)
+
+        assert old_order is not None, (
+            "Failed to cancel the order id %s" % order_id
+        )
+
+        return self.add_order(
+            instmt=instmt,
+            price=amended_price,
+            qty=amended_qty,
+            side=order.side
+        )
