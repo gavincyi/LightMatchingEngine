@@ -107,7 +107,7 @@ cdef class LightMatchingEngine:
                   order.leaves_qty >= 1e-9:
                 best_price_qty = sum([ask.leaves_qty for ask in order_book.asks[best_price]])
                 match_qty = min(best_price_qty, order.leaves_qty)
-                assert match_qty > 0, "Match quantity must be larger than zero"
+                assert match_qty >= 1e-9, "Match quantity must be larger than zero"
 
                 # Generate aggressive order trade first
                 self.curr_trade_id += 1
@@ -141,7 +141,7 @@ cdef class LightMatchingEngine:
                                 else None
 
             # Add the remaining order into the depth
-            if order.leaves_qty > 0.0:
+            if order.leaves_qty >= 1e-9:
                 depth = order_book.bids.setdefault(price, [])
                 depth.append(order)
                 order_book.order_id_map[order_id] = order
