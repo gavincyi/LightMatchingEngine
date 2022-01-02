@@ -3,9 +3,9 @@ cpdef enum Side:
     BUY = 1
     SELL = 2
 
-
 cdef class Order:
-    cdef public int order_id
+    cdef public str order_id
+    cdef public int order_number
     cdef public str instmt
     cdef public double price
     cdef public double qty
@@ -13,18 +13,18 @@ cdef class Order:
     cdef public double leaves_qty
     cdef public Side side
 
-    def __init__(self, order_id, instmt, price, qty, side):
+    def __init__(self, order_number, order_id, instmt, price, qty, side):
         """
         Constructor
         """
         self.order_id = order_id
+        self.order_number = order_number
         self.instmt = instmt
         self.price = price
         self.qty = qty
         self.cum_qty = 0
         self.leaves_qty = qty
         self.side = side
-
 
 cdef class OrderBook:
     cdef public dict bids
@@ -39,9 +39,8 @@ cdef class OrderBook:
         self.asks = {}
         self.order_id_map = {}
 
-
 cdef class Trade:
-    cdef public int order_id
+    cdef public str order_id
     cdef public str instmt
     cdef public double trade_price
     cdef public double trade_qty
@@ -59,10 +58,10 @@ cdef class Trade:
         self.trade_side = trade_side
         self.trade_id = trade_id
 
-
 cdef class LightMatchingEngine:
     cdef public dict order_books
-    cdef public int curr_order_id
+    cdef public str curr_order_id
+    cdef public int curr_order_number
     cdef public int curr_trade_id
 
     def __init__(self):
@@ -70,10 +69,10 @@ cdef class LightMatchingEngine:
         Constructor
         """
         self.order_books = {}
-        self.curr_order_id = 0
+        self.curr_order_number = 0
         self.curr_trade_id = 0
 
-    cpdef add_order(self, str instmt, double price, double qty, Side side):
+    cpdef add_order(self, str instmt, str order_id, double price, double qty, Side side):
         """
         Add an order
         :param instmt       Instrument name
@@ -84,27 +83,26 @@ cdef class LightMatchingEngine:
                 Empty list if there is no matching.
         """
         cdef list trades = []
-        cdef int order_id
         cdef Order order
 
         assert side == Side.BUY or side == Side.SELL, \
-                "Invalid side %s" % side
+            "Invalid side %s" % side
 
         # Locate the order book
         order_book = self.order_books.setdefault(instmt, OrderBook())
 
         # Initialization
-        self.curr_order_id += 1
-        order_id = self.curr_order_id
-        order = Order(order_id, instmt, price, qty, side)
+        self.curr_order_number += 1
+        order_number = self.curr_order_id
+        order = Order(order_id, order_number, instmt, price, qty, side)
 
         if side == Side.BUY:
             # Buy
             best_price = min(order_book.asks.keys()) if len(order_book.asks) > 0 \
-                            else None
+                else None
             while best_price is not None and \
-                  (price == 0.0 or price >= best_price ) and \
-                  order.leaves_qty >= 1e-9:
+                    (price == 0.0 or price >= best_price) and \
+                    order.leaves_qty >= 1e-9:
                 best_price_qty = sum([ask.leaves_qty for ask in order_book.asks[best_price]])
                 match_qty = min(best_price_qty, order.leaves_qty)
                 assert match_qty >= 1e-9, "Match quantity must be larger than zero"
@@ -138,7 +136,7 @@ cdef class LightMatchingEngine:
 
                 # Update the best price
                 best_price = min(order_book.asks.keys()) if len(order_book.asks) > 0 \
-                                else None
+                    else None
 
             # Add the remaining order into the depth
             if order.leaves_qty >= 1e-9:
@@ -148,10 +146,10 @@ cdef class LightMatchingEngine:
         else:
             #Sell
             best_price = max(order_book.bids.keys()) if len(order_book.bids) > 0 \
-                            else None
+                else None
             while best_price is not None and \
-                  (price == 0.0 or price <= best_price) and \
-                  order.leaves_qty >= 1e-9:
+                    (price == 0.0 or price <= best_price) and \
+                    order.leaves_qty >= 1e-9:
                 best_price_qty = sum([bid.leaves_qty for bid in order_book.bids[best_price]])
                 match_qty = min(best_price_qty, order.leaves_qty)
                 assert match_qty >= 1e-9, "Match quantity must be larger than zero"
@@ -185,7 +183,7 @@ cdef class LightMatchingEngine:
 
                 # Update the best price
                 best_price = max(order_book.bids.keys()) if len(order_book.bids) > 0 \
-                                else None
+                    else None
 
             # Add the remaining order into the depth
             if order.leaves_qty >= 1e-9:
@@ -195,7 +193,7 @@ cdef class LightMatchingEngine:
 
         return order, trades
 
-    cpdef cancel_order(self, int order_id, str instmt):
+    cpdef cancel_order(self, str order_id, str instmt):
         """
         Cancel order
         :param order_id     Order ID
@@ -208,7 +206,7 @@ cdef class LightMatchingEngine:
         cdef int index
 
         assert instmt in self.order_books.keys(), \
-                "Instrument %s is not valid in the order book" % instmt
+            "Instrument %s is not valid in the order book" % instmt
         order_book = self.order_books[instmt]
 
         if order_id not in order_book.order_id_map.keys():
@@ -222,11 +220,11 @@ cdef class LightMatchingEngine:
 
         if side == Side.BUY:
             assert order_price in order_book.bids.keys(), \
-                 "Order price %.6f is not in the bid price depth" % order_price
+                "Order price %.6f is not in the bid price depth" % order_price
             price_level = order_book.bids[order_price]
         else:
             assert order_price in order_book.asks.keys(), \
-                 "Order price %.6f is not in the ask price depth" % order_price
+                "Order price %.6f is not in the ask price depth" % order_price
             price_level = order_book.asks[order_price]
 
         index = 0
@@ -256,7 +254,7 @@ cdef class LightMatchingEngine:
 
         return order
 
-    cpdef amend_order(self, int order_id, str instmt, double amended_price,
+    cpdef amend_order(self, str order_id, str instmt, double amended_price,
                       double amended_qty):
         """
         Amend an order
@@ -273,7 +271,7 @@ cdef class LightMatchingEngine:
         cdef int index
 
         assert instmt in self.order_books.keys(), \
-                "Instrument %s is not valid in the order book" % instmt
+            "Instrument %s is not valid in the order book" % instmt
         order_book = self.order_books[instmt]
 
         if order_id not in order_book.order_id_map.keys():
@@ -284,8 +282,8 @@ cdef class LightMatchingEngine:
         order_price = order.price
 
         assert amended_qty - order.cum_qty >= 1e-9, (
-            "The amended qty (%s) cannot be amended below the cum qty (%s)"
-            % (amended_qty, order.cum_qty)
+                "The amended qty (%s) cannot be amended below the cum qty (%s)"
+                % (amended_qty, order.cum_qty)
         )
 
         if (abs(order_price - amended_price) < 1e-9 and
@@ -302,7 +300,7 @@ cdef class LightMatchingEngine:
         old_order = self.cancel_order(order_id=order_id, instmt=instmt)
 
         assert old_order is not None, (
-            "Failed to cancel the order id %s" % order_id
+                "Failed to cancel the order id %s" % order_id
         )
 
         return self.add_order(
