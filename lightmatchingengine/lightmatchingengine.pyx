@@ -17,8 +17,8 @@ cdef class Order:
         """
         Constructor
         """
-        self.order_id = order_id
         self.order_number = order_number
+        self.order_id = order_id
         self.instmt = instmt
         self.price = price
         self.qty = qty
@@ -76,6 +76,7 @@ cdef class LightMatchingEngine:
         """
         Add an order
         :param instmt       Instrument name
+        :param order_id     order uuid
         :param price        Price, defined as zero if market order
         :param qty          Order quantity
         :param side         1 for BUY, 2 for SELL. Defaulted as BUY.
@@ -93,8 +94,8 @@ cdef class LightMatchingEngine:
 
         # Initialization
         self.curr_order_number += 1
-        order_number = self.curr_order_id
-        order = Order(order_id, order_number, instmt, price, qty, side)
+        order_number = self.curr_order_number
+        order = Order(order_number, order_id, instmt, price, qty, side)
 
         if side == Side.BUY:
             # Buy
